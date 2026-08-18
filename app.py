@@ -1,4 +1,6 @@
 import os
+PORT = int(os.environ.get("PORT", 10000))
+import os
 import asyncio
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
