@@ -1,46 +1,41 @@
 import os
-PORT = int(os.environ.get("PORT", 10000))
-import os
-import asyncio
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 import openai
 
-# Get passwords from Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# Get passwords
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+OPENAI_KEY = os.environ.get("OPENAI_API_KEY")
 
-if not TELEGRAM_TOKEN or not OPENAI_API_KEY:
-    print("❌ Missing TELEGRAM_TOKEN or OPENAI_API_KEY!")
+if not TOKEN or not OPENAI_KEY:
+    print("❌ Missing passwords!")
     exit(1)
 
-openai.api_key = OPENAI_API_KEY
+openai.api_key = OPENAI_KEY
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        user_message = update.message.text
+        essay = update.message.text
         
-        # Your grading prompt
+        # Simple grading
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a TOEFL essay grader. Grade on 0-6 scale."},
-                {"role": "user", "content": f"Grade this essay: {user_message}"}
+                {"role": "system", "content": "You are a TOEFL grader. Grade 0-6. Be strict."},
+                {"role": "user", "content": f"Grade this essay: {essay}"}
             ]
         )
         
-        reply = response.choices[0].message.content
-        await update.message.reply_text(reply)
+        await update.message.reply_text(response.choices[0].message.content)
         
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
 
 def main():
-    print("🤖 Starting TOEFL Essay Grader Bot...")
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
+    print("🤖 Bot starting...")
+    app = Application.builder().token(TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
-    print("✅ Bot is running! Press Ctrl+C to stop.")
+    print("✅ Bot is running!")
     app.run_polling()
 
 if __name__ == "__main__":
